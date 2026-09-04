@@ -4,29 +4,33 @@ on:
   push:
     branches:
       - master
-      
+
   schedule:
-  - cron: "0 1 * * *"   # 01:00 UTC
-  - cron: "0 3 * * *"   # 03:00 UTC
-  - cron: "0 5 * * *"   # 05:00 UTC
-  - cron: "0 7 * * *"   # 07:00 UTC
-  - cron: "0 9 * * *"   # 09:00 UTC
-  - cron: "0 11 * * *"  # 11:00 UTC
-  - cron: "0 13 * * *"  # 13:00 UTC
-  - cron: "0 15 * * *"  # 15:00 UTC
-  - cron: "0 17 * * *"  # 17:00 UTC
-  - cron: "0 19 * * *"  # 19:00 UTC
-  - cron: "0 21 * * *"  # 21:00 UTC
-  - cron: "0 23 * * *"  # 23:00 UTC
+    - cron: "0 1 * * *"   # 01:00 UTC
+    - cron: "0 3 * * *"   # 03:00 UTC
+    - cron: "0 5 * * *"   # 05:00 UTC
+    - cron: "0 7 * * *"   # 07:00 UTC
+    - cron: "0 9 * * *"   # 09:00 UTC
+    - cron: "0 11 * * *"  # 11:00 UTC
+    - cron: "0 13 * * *"  # 13:00 UTC
+    - cron: "0 15 * * *"  # 15:00 UTC
+    - cron: "0 17 * * *"  # 17:00 UTC
+    - cron: "0 19 * * *"  # 19:00 UTC
+    - cron: "0 21 * * *"  # 21:00 UTC
+    - cron: "0 23 * * *"  # 23:00 UTC
+
+permissions:
+  contents: write
 
 jobs:
   auto_commit:
     runs-on: ubuntu-latest
+
     steps:
-      - name: DEBUG 
-        run: echo "::debug::Ref = ${{github.ref}}"
-        
-      - uses: actions/checkout@v3      
+      - name: DEBUG
+        run: echo "::debug::Ref = ${{ github.ref }}"
+
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -35,27 +39,29 @@ jobs:
         id: random_skip
         run: |
           random=$((RANDOM % 100))
+
           if [ $random -lt 30 ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "Skip commit this time (random probability)"
           else
-            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "Will commit this time"
           fi
 
       - name: Modify last update
         if: steps.random_skip.outputs.skip == 'false'
         run: |
-          d=`date '+%Y-%m-%dT%H:%M:%SZ'`
-          echo $d > LAST_UPDATED
-          
+          d=$(date '+%Y-%m-%dT%H:%M:%SZ')
+          echo "$d" > LAST_UPDATED
+
       - name: Commit changes
         if: steps.random_skip.outputs.skip == 'false'
         run: |
           git config --local user.email "fabianskiip@gmail.com"
           git config --local user.name "Muchamad Fabian"
+
           git add -A
-          
+
           arr[0]="chore(bot): 😂 auto commit"
           arr[1]="chore(bot): 😱 auto commit"
           arr[2]="chore(bot): 👿 auto commit"
@@ -71,14 +77,15 @@ jobs:
           arr[12]="chore(bot): 🚀 auto commit"
           arr[13]="chore(bot): ⭐ auto commit"
           arr[14]="chore(bot): 🔥 auto commit"
-          
-          rand=$[$RANDOM % ${#arr[@]}]
-          
+
+          rand=$((RANDOM % ${#arr[@]}))
+
           git commit -m "${arr[$rand]}"
-          
+
       - name: GitHub Push
         if: steps.random_skip.outputs.skip == 'false'
         uses: ad-m/github-push-action@v0.6.0
         with:
           directory: "."
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: master
