@@ -6,18 +6,18 @@ on:
       - master
 
   schedule:
-    - cron: "0 1 * * *"   # 01:00 UTC
-    - cron: "0 3 * * *"   # 03:00 UTC
-    - cron: "0 5 * * *"   # 05:00 UTC
-    - cron: "0 7 * * *"   # 07:00 UTC
-    - cron: "0 9 * * *"   # 09:00 UTC
-    - cron: "0 11 * * *"  # 11:00 UTC
-    - cron: "0 13 * * *"  # 13:00 UTC
-    - cron: "0 15 * * *"  # 15:00 UTC
-    - cron: "0 17 * * *"  # 17:00 UTC
-    - cron: "0 19 * * *"  # 19:00 UTC
-    - cron: "0 21 * * *"  # 21:00 UTC
-    - cron: "0 23 * * *"  # 23:00 UTC
+    - cron: "0 1 * * *"
+    - cron: "0 3 * * *"
+    - cron: "0 5 * * *"
+    - cron: "0 7 * * *"
+    - cron: "0 9 * * *"
+    - cron: "0 11 * * *"
+    - cron: "0 13 * * *"
+    - cron: "0 15 * * *"
+    - cron: "0 17 * * *"
+    - cron: "0 19 * * *"
+    - cron: "0 21 * * *"
+    - cron: "0 23 * * *"
 
 permissions:
   contents: write
@@ -27,20 +27,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: DEBUG
-        run: echo "::debug::Ref = ${{ github.ref }}"
-
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          persist-credentials: false
           fetch-depth: 0
+
+      - name: DEBUG
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          git status
 
       - name: Generate random skip (30% chance to skip)
         id: random_skip
         run: |
           random=$((RANDOM % 100))
 
-          if [ $random -lt 30 ]; then
+          if [ "$random" -lt 30 ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "Skip commit this time (random probability)"
           else
@@ -57,35 +60,36 @@ jobs:
       - name: Commit changes
         if: steps.random_skip.outputs.skip == 'false'
         run: |
-          git config --local user.email "fabianskiip@gmail.com"
-          git config --local user.name "Muchamad Fabian"
+          git config user.email "fabianskiip@gmail.com"
+          git config user.name "Muchamad Fabian"
 
           git add -A
 
-          arr[0]="chore(bot): 😂 auto commit"
-          arr[1]="chore(bot): 😱 auto commit"
-          arr[2]="chore(bot): 👿 auto commit"
-          arr[3]="chore(bot): 💩 auto commit"
-          arr[4]="chore(bot): 🙏 auto commit"
-          arr[5]="chore(bot): 🙈 auto commit"
-          arr[6]="chore(bot): 🐐 auto commit"
-          arr[7]="chore(bot): 🤖 auto commit"
-          arr[8]="chore(bot): 🟩 auto commit"
-          arr[9]="chore(bot): 👻 auto commit"
-          arr[10]="chore(bot): 💚 auto commit"
-          arr[11]="chore(bot): 🎉 auto commit"
-          arr[12]="chore(bot): 🚀 auto commit"
-          arr[13]="chore(bot): ⭐ auto commit"
-          arr[14]="chore(bot): 🔥 auto commit"
+          arr=(
+            "chore(bot): 😂 auto commit"
+            "chore(bot): 😱 auto commit"
+            "chore(bot): 👿 auto commit"
+            "chore(bot): 💩 auto commit"
+            "chore(bot): 🙏 auto commit"
+            "chore(bot): 🙈 auto commit"
+            "chore(bot): 🐐 auto commit"
+            "chore(bot): 🤖 auto commit"
+            "chore(bot): 🟩 auto commit"
+            "chore(bot): 👻 auto commit"
+            "chore(bot): 💚 auto commit"
+            "chore(bot): 🎉 auto commit"
+            "chore(bot): 🚀 auto commit"
+            "chore(bot): ⭐ auto commit"
+            "chore(bot): 🔥 auto commit"
+          )
 
           rand=$((RANDOM % ${#arr[@]}))
 
           git commit -m "${arr[$rand]}"
 
-      - name: GitHub Push
+      - name: Push changes
         if: steps.random_skip.outputs.skip == 'false'
-        uses: ad-m/github-push-action@v0.6.0
-        with:
-          directory: "."
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: master
+        run: |
+          git push origin HEAD:master
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
