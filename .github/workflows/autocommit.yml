@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: master
 
       - name: Update LAST_UPDATED
         run: |
@@ -40,6 +41,7 @@ jobs:
 
           git commit -m "chore(bot): auto commit"
 
-      - name: Push changes
+      - name: Sync and Push changes
         run: |
-          git push
+          git pull --rebase origin master
+          git push origin master
