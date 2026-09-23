@@ -1,23 +1,13 @@
-name: Auto commit
+name: Auto Commit
 
 on:
-  push:
-    branches:
-      - master
-
   schedule:
     - cron: "0 1 * * *"
     - cron: "0 3 * * *"
     - cron: "0 5 * * *"
     - cron: "0 7 * * *"
-    - cron: "0 9 * * *"
-    - cron: "0 11 * * *"
-    - cron: "0 13 * * *"
-    - cron: "0 15 * * *"
-    - cron: "0 17 * * *"
-    - cron: "0 19 * * *"
-    - cron: "0 21 * * *"
-    - cron: "0 23 * * *"
+
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -27,69 +17,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: DEBUG
+      - name: Update LAST_UPDATED
         run: |
-          echo "Repository: ${{ github.repository }}"
-          echo "Branch: ${{ github.ref }}"
-          git status
-
-      - name: Generate random skip (30% chance to skip)
-        id: random_skip
-        run: |
-          random=$((RANDOM % 100))
-
-          if [ "$random" -lt 30 ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Skip commit this time (random probability)"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-            echo "Will commit this time"
-          fi
-
-      - name: Modify last update
-        if: steps.random_skip.outputs.skip == 'false'
-        run: |
-          d=$(date '+%Y-%m-%dT%H:%M:%SZ')
-          echo "$d" > LAST_UPDATED
+          date -u '+%Y-%m-%dT%H:%M:%SZ' > LAST_UPDATED
 
       - name: Commit changes
-        if: steps.random_skip.outputs.skip == 'false'
         run: |
-          git config user.email "fabianskiip@gmail.com"
-          git config user.name "Muchamad Fabian"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add -A
+          git add LAST_UPDATED
 
-          arr=(
-            "chore(bot): 😂 auto commit"
-            "chore(bot): 😱 auto commit"
-            "chore(bot): 👿 auto commit"
-            "chore(bot): 💩 auto commit"
-            "chore(bot): 🙏 auto commit"
-            "chore(bot): 🙈 auto commit"
-            "chore(bot): 🐐 auto commit"
-            "chore(bot): 🤖 auto commit"
-            "chore(bot): 🟩 auto commit"
-            "chore(bot): 👻 auto commit"
-            "chore(bot): 💚 auto commit"
-            "chore(bot): 🎉 auto commit"
-            "chore(bot): 🚀 auto commit"
-            "chore(bot): ⭐ auto commit"
-            "chore(bot): 🔥 auto commit"
-          )
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
 
-          rand=$((RANDOM % ${#arr[@]}))
-
-          git commit -m "${arr[$rand]}"
+          git commit -m "chore(bot): auto commit"
 
       - name: Push changes
-        if: steps.random_skip.outputs.skip == 'false'
         run: |
-          git push origin HEAD:master
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git push
